@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로봇소프트웨어과 | Robot Software Department</title>
+    
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #2121D5;
+            --secondary-color: #00BFFF;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --accent-color: #ff4d4d;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; }
+
+        header { background-color: var(--primary-color); color: white; padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 800; }
+        nav ul { display: flex; list-style: none; gap: 24px; }
+        nav ul li a { color: rgba(255, 255, 255, 0.85); text-decoration: none; font-weight: 500; font-size: 0.95rem; }
+
+        .hero { position: relative; height: 350px; margin: 2rem 5% 0; border-radius: 12px 12px 0 0; overflow: hidden; background-image: url('hero-bg.png'); background-size: cover; background-position: center; display: flex; align-items: flex-end; color: white; }
+        .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%); }
+        .hero-content { position: relative; padding: 3rem; z-index: 2; }
+        .hero-info-bar { background: rgba(0, 191, 255, 0.9); padding: 1rem 5%; display: flex; gap: 2rem; color: white; margin: 0 5% 2rem; border-radius: 0 0 12px 12px; position: relative; z-index: 5; }
+
+        .main-content { padding: 0 5% 4rem; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+        section { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius); border: 1px solid rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid var(--bg-color); padding-bottom: 0.5rem; }
+        .section-header h2 { font-size: 1.25rem; color: var(--primary-color); }
+
+        .post-list-item { display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        
+        .club-tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { padding: 0.5rem 1rem; border: none; background: #f0f0f0; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight: 500; font-size: 0.85rem; }
+        .tab-btn.active { background: var(--primary-color); color: white; }
+        .club-detail { display: flex; gap: 2rem; }
+        .club-img { width: 300px; height: 200px; object-fit: cover; border-radius: 8px; }
+
+        .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; text-align: center; }
+        .service-item i { color: var(--primary-color); margin-bottom: 0.5rem; }
+        .service-label { font-size: 0.8rem; font-weight: 600; }
+
+        /* Board - Updated Layout */
+        .board-post { padding: 1.5rem; border-bottom: 1px solid #eee; background: #fff; }
+        .post-main-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .author-tag { background: #e8ebff; color: var(--primary-color); padding: 2px 10px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; min-width: 60px; text-align: center; }
+        .post-title { font-size: 1.1rem; font-weight: 700; color: #1a1a1a; }
+        .post-content-preview { color: #555; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap; padding-left: 5px; }
+        .post-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; color: #999; font-size: 0.75rem; }
+
+        .comment { background: #f4f6f8; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; }
+        .comment.reply { margin-left: 30px; border-left: 2px solid var(--primary-color); }
+        
+        .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 2.5rem; border-radius: var(--border-radius); width: 550px; max-width: 90%; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 600; }
+        .form-group input, .form-group textarea { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; }
+
+        @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } .club-detail { flex-direction: column; } .club-img { width: 100%; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">로봇소프트웨어과</div>
+        <nav>
+            <ul>
+                <li><a href="#">학과소개</a></li>
+                <li><a href="#">교육과정</a></li>
+                <li><a href="#">교수소개</a></li>
+                <li><a href="#">학과앨범</a></li>
+                <li><a href="#board">자유게시판</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>로봇소프트웨어과</h1>
+            <p>로봇소프트웨어 분야를 이끌 인재양성의 중심</p>
+            <h2 style="font-size: 2.5rem; opacity: 0.8; margin-top: 5px;">Robot Software</h2>
+        </div>
+    </div>
+    
+    <div class="hero-info-bar">
+        <div style="display:flex; align-items:center; gap:8px;"><i data-lucide="map-pin"></i> 4호관 206호</div>
+        <div style="display:flex; align-items:center; gap:8px;"><i data-lucide="phone"></i> 02-2610-1832</div>
+        <div style="display:flex; align-items:center; gap:8px;"><i data-lucide="mail"></i> yjyang@dongyang.ac.kr</div>
+    </div>
+
+    <main class="main-content">
+        <div class="left-col">
+            <section>
+                <div class="section-header"><h2>학과공지</h2><i data-lucide="plus"></i></div>
+                <div class="post-list-item"><span>[반도체협회] 부트캠프 ASM 코리아 3차 채용 공고</span><span class="text-muted">2026.04.28</span></div>
+                <div class="post-list-item"><span>2026학년도 1학기 출석 인정 절차 변경 안내</span><span class="text-muted">2026.04.23</span></div>
+                <div class="post-list-item"><span>스마트팩토리실무 휴보강 공지</span><span class="text-muted">2026.04.17</span></div>
+            </section>
+
+            <section>
+                <div class="section-header"><h2>전공동아리</h2></div>
+                <div class="club-tabs" id="clubTabs">
+                    <button class="tab-btn" data-id="MAS">MAS</button>
+                    <button class="tab-btn" data-id="MCA">MCA</button>
+                    <button class="tab-btn active" data-id="MoAS">MoAS</button>
+                    <button class="tab-btn" data-id="SMART">SMART</button>
+                    <button class="tab-btn" data-id="UR">UR</button>
+                    <button class="tab-btn" data-id="Intel">지능형로봇</button>
+                </div>
+                <div class="club-detail">
+                    <div style="flex:1">
+                        <h3 id="clubName">MoAS</h3>
+                        <p id="clubDesc">모바일을 바탕으로 오픈 H/W기반의 Microprocessor, 3D 프린터, IoT 센서 등을 활용하여 로봇 및 자동화 시스템의 S/W를 설계하는 동아리입니다.</p>
+                    </div>
+                    <img id="clubImage" src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400" class="club-img">
+                </div>
+            </section>
+
+            <section id="board">
+                <div class="section-header">
+                    <h2>자유게시판</h2>
+                    <button class="btn btn-primary" onclick="openModal()">글쓰기</button>
+                </div>
+                <div id="postsList"><p style="text-align:center; padding:2rem;">로딩 중...</p></div>
+            </section>
+        </div>
+
+        <div class="right-col">
+            <section>
+                <div class="section-header"><h2>주요 서비스</h2></div>
+                <div class="service-grid">
+                    <div class="service-item"><i data-lucide="globe"></i><div class="service-label">e 서비스</div></div>
+                    <div class="service-item"><i data-lucide="book-open"></i><div class="service-label">도서관</div></div>
+                    <div class="service-item"><i data-lucide="user-check"></i><div class="service-label">수강신청</div></div>
+                    <div class="service-item"><i data-lucide="file-text"></i><div class="service-label">증명서 발급</div></div>
+                    <div class="service-item"><i data-lucide="layout"></i><div class="service-label">MS오피스 365</div></div>
+                    <div class="service-item"><i data-lucide="briefcase"></i><div class="service-label">DOIT</div></div>
+                </div>
+            </section>
+            <section>
+                <div class="section-header"><h2>학과앨범</h2></div>
+                <div style="text-align:center; color:#ccc; padding:2rem;"><i data-lucide="image" style="width:48px; height:48px;"></i><p>최근게시물이 없습니다.</p></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div class="modal" id="postModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">게시글 작성</h2>
+            <form id="postForm" style="margin-top:1.5rem;">
+                <input type="hidden" id="postId">
+                <div class="form-group"><label>이름</label><input type="text" id="postAuthor" required></div>
+                <div class="form-group"><label>제목</label><input type="text" id="postTitle" required></div>
+                <div class="form-group"><label>내용</label><textarea id="postContent" rows="6" required></textarea></div>
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button type="button" class="btn" onclick="closeModal()">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Initialize ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCpES5tDi0Cy8zdoDyJf3byWdIw5XgJl2Q",
+            authDomain: "robot-test-b965a.firebaseapp.com",
+            projectId: "robot-test-b965a",
+            storageBucket: "robot-test-b965a.firebasestorage.app",
+            messagingSenderId: "894129080350",
+            appId: "1:894129080350:web:913bd2e398440ea25cc60f",
+            measurementId: "G-6XNKWZ0CN5"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Club Data
+        const clubInfo = {
+            MAS: { name: "MAS", desc: "마이크로컨트롤러 시스템 제어 동아리", img: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400" },
+            MCA: { name: "MCA", desc: "모바일 앱 개발 및 AI 접목 연구 동아리", img: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400" },
+            MoAS: { name: "MoAS", desc: "모바일 기반 로봇 소프트웨어 설계 동아리", img: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400" },
+            SMART: { name: "SMART", desc: "지능형 로봇 통신 시스템 연구 동아리", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400" },
+            UR: { name: "UR", desc: "산업용 로봇 제어 및 실무 실습 동아리", img: "https://images.unsplash.com/photo-1561144443-f54bc579b33a?w=400" },
+            Intel: { name: "지능형로봇", desc: "자율 주행 로봇 프로젝트 수행 동아리", img: "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=400" }
+        };
+
+        function openModal() { document.getElementById('postForm').reset(); document.getElementById('postId').value = ''; document.getElementById('modalTitle').innerText='게시글 작성'; document.getElementById('postModal').style.display='flex'; }
+        function closeModal() { document.getElementById('postModal').style.display='none'; }
+
+        document.getElementById('postForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('postId').value;
+            const data = {
+                author: document.getElementById('postAuthor').value,
+                title: document.getElementById('postTitle').value,
+                content: document.getElementById('postContent').value,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            if(id) await db.collection("posts").doc(id).update(data);
+            else await db.collection("posts").add(data);
+            closeModal();
+        };
+
+        // --- Board Render Logic ---
+        db.collection("posts").orderBy("createdAt", "desc").onSnapshot(snap => {
+            const list = document.getElementById('postsList');
+            list.innerHTML = '';
+            if(snap.empty) { list.innerHTML = '<p style="text-align:center; padding:2rem;">게시글이 없습니다.</p>'; return; }
+            snap.forEach(doc => {
+                const p = doc.data();
+                const postEl = document.createElement('div');
+                postEl.className = 'board-post';
+                postEl.innerHTML = `
+                    <div class="post-main-row">
+                        <div class="author-tag">${p.author}</div>
+                        <div class="post-title">${p.title}</div>
+                    </div>
+                    <div class="post-content-preview">${p.content}</div>
+                    <div class="post-meta">
+                        <span>${p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleString() : ''}</span>
+                        <div>
+                            <span onclick="editPost('${doc.id}', '${p.author}', '${p.title}', \`${p.content}\`)" style="color:blue; cursor:pointer;">수정</span> | 
+                            <span onclick="deletePost('${doc.id}')" style="color:red; cursor:pointer;">삭제</span>
+                        </div>
+                    </div>
+                    <div style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+                        <div id="comms-${doc.id}"></div>
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <input type="text" id="ci-${doc.id}" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.85rem;" placeholder="댓글 입력...">
+                            <button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;" onclick="addComment('${doc.id}')">등록</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(postEl);
+                loadComments(doc.id);
+            });
+            lucide.createIcons();
+        });
+
+        function deletePost(id) { if(confirm("삭제하시겠습니까?")) db.collection("posts").doc(id).delete(); }
+        function editPost(id, a, t, c) {
+            document.getElementById('postId').value = id;
+            document.getElementById('postAuthor').value = a;
+            document.getElementById('postTitle').value = t;
+            document.getElementById('postContent').value = c;
+            document.getElementById('modalTitle').innerText = '게시글 수정';
+            document.getElementById('postModal').style.display='flex';
+        }
+
+        // Comments
+        function loadComments(pid) {
+            db.collection("posts").doc(pid).collection("comments").orderBy("createdAt", "asc").onSnapshot(snap => {
+                const container = document.getElementById('comms-'+pid);
+                container.innerHTML = '';
+                const items = [];
+                snap.forEach(d => items.push({id: d.id, ...d.data()}));
+                items.filter(c => !c.parentId).forEach(parent => {
+                    renderComment(container, parent, pid);
+                    items.filter(c => c.parentId === parent.id).forEach(child => renderComment(container, child, pid, true));
+                });
+            });
+        }
+
+        function renderComment(box, c, pid, isReply=false) {
+            const div = document.createElement('div');
+            div.className = 'comment' + (isReply ? ' reply' : '');
+            div.innerHTML = `
+                <div>${isReply ? '↪ ' : ''}${c.text}</div>
+                ${!isReply ? `<div style="text-align:right;"><small style="color:var(--primary-color); cursor:pointer;" onclick="showReplyForm('${c.id}')">답글</small></div>` : ''}
+                <div id="rf-${c.id}" style="display:none; gap:5px; margin-top:5px;">
+                    <input type="text" id="ri-${c.id}" style="flex:1; padding:3px;" placeholder="답글 입력...">
+                    <button class="btn btn-primary" style="padding:3px 8px; font-size:0.7rem;" onclick="addComment('${pid}', '${c.id}')">등록</button>
+                </div>
+            `;
+            box.appendChild(div);
+        }
+
+        function showReplyForm(cid) { const el = document.getElementById('rf-'+cid); el.style.display = el.style.display==='none' ? 'flex' : 'none'; }
+        async function addComment(pid, parentId=null) {
+            const input = document.getElementById(parentId ? 'ri-'+parentId : 'ci-'+pid);
+            if(!input.value) return;
+            await db.collection("posts").doc(pid).collection("comments").add({
+                text: input.value, parentId: parentId, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            input.value = '';
+        }
+
+        // Tab Switch
+        document.getElementById('clubTabs').onclick = (e) => {
+            if(e.target.dataset.id) {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                const d = clubInfo[e.target.dataset.id];
+                document.getElementById('clubName').innerText = d.name;
+                document.getElementById('clubDesc').innerText = d.desc;
+                document.getElementById('clubImage').src = d.img;
+            }
+        };
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
