@@ -1,5 +1,10 @@
 // GSAP & Firebase (Compat v8) Integrated Script
 
+// ==========================================
+// [파이어베이스(Firebase) 연동 설정]
+// 사람들이 글을 남겨도 영구히 저장되도록 하려면 아래의 빈칸을 채워주세요!
+// Firebase Console -> 프로젝트 생성 -> 웹 앱 추가 후 아래 SDK 설정 값을 그대로 복사 붙여넣기 하시면 됩니다.
+// ==========================================
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_AUTH_DOMAIN",
@@ -11,19 +16,22 @@ const firebaseConfig = {
 
 let db;
 let isFirebaseReal = false;
-// Global for simulation mode consistency
+// 파이어베이스가 연결되기 전에는 브라우저 내부 로컬스토리지에 안전하게 임시 저장됩니다.
 window.localPosts = JSON.parse(localStorage.getItem('sim_posts')) || [
     { id: "admin-1", author: "Admin", password: "admin", content: "휴림로봇 커뮤니티에 오신 것을 환영합니다! 비밀번호 'admin' 또는 '1234'로 관리해보세요.", createdAt: { seconds: Date.now()/1000 } }
 ];
 
 try {
-    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.apiKey.trim() !== "") {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         isFirebaseReal = true;
+        console.log("Firebase Firestore가 성공적으로 연동되었습니다! 모든 게시글이 클라우드에 안전하게 영구 저장됩니다.");
+    } else {
+        console.log("Firebase 설정이 비어 있어 '로컬 시뮬레이션 모드(LocalStorage)'로 동작합니다. 글을 영구 보존하려면 script.js 상단에 Firebase Key를 입력하세요.");
     }
 } catch (e) {
-    console.warn("Firebase Init failed, using local mode.");
+    console.error("Firebase 초기화 중 에러가 발생하여 로컬 모드로 전환합니다:", e);
 }
 
 // Global actions for onclick access
